@@ -21,7 +21,7 @@ class UtilityCommands(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.tree.sync(guild=testGuild)
+        await self.bot.tree.sync()
 
     @discord.app_commands.command(
         name="ping",
