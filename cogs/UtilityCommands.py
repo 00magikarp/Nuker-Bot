@@ -5,7 +5,7 @@ import dotenv
 import discord
 from discord.ext import commands
 
-from extras.checks import check_admin, is_magicarp
+from extras.checks import check_admin
 
 dotenv.load_dotenv()
 TEST_GUILD_ID = os.getenv('TEST_GUILD')
@@ -57,23 +57,6 @@ class UtilityCommands(commands.Cog):
 
         await interaction.response.send_message("💥", ephemeral=True)
         await interaction.channel.purge(limit=number)
-
-    @discord.app_commands.command(
-        name="kill",
-        description="Kill the bot (magicarp only)",
-    )
-    async def kill(self, interaction: discord.Interaction) -> None:
-        """
-        Kill the bot (magicarp only)
-
-        :param interaction: The interaction object.
-        """
-        if not await is_magicarp(interaction):
-            await interaction.response.send_message(f"Server has entered LOCKDOWN.")
-            return
-
-        await interaction.response.send_message(f"I've been killed by <@{interaction.user.id}>")
-        sys.exit(1)
 
     @discord.app_commands.command(
         name="lockdown",
