@@ -45,15 +45,14 @@ class CustomLogger:
         :param logger_mode: The mode of logging, from the enum object :class:`LoggerModes`
         """
 
-        match logger_mode:
-            case CustomLogger.INFO:
-                self.logger.info(text)
-            case CustomLogger.WARNING:
-                self.logger.warning(text)
-            case CustomLogger.DEBUG:
-                self.logger.debug(text)
-            case _:
-                self.logger.warning(f"ATTEMPT TO LOG FAILED. DEFAULTED TO WARNING.")
-                self.logger.warning(text)
+        if logger_mode == CustomLogger.INFO:
+            self.logger.info(text)
+        elif logger_mode == CustomLogger.WARNING:
+            self.logger.warning(text)
+        elif logger_mode == CustomLogger.DEBUG:
+            self.logger.debug(text)
+        else:
+            self.logger.warning(f"ATTEMPT TO LOG FAILED. DEFAULTED TO WARNING.")
+            self.logger.warning(text)
 
         return
