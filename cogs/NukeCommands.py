@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 
 from extras.ConfirmDenyButtons import ConfirmDenyButtons
-from extras.CheckAdmin import check_admin
+from extras.checks import check_admin
 
 dotenv.load_dotenv()
 TEST_GUILD_ID = os.getenv('TEST_GUILD')
