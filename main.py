@@ -6,7 +6,7 @@ import dotenv
 from discord.ext import commands
 from extras.CustomLogger import CustomLogger
 
-logger = CustomLogger()
+logger = CustomLogger(CustomLogger.DEBUG)
 
 dotenv.load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
@@ -19,7 +19,7 @@ async def load_extensions():
     for filename in os.listdir("./cogs"):
         if filename.endswith(".py") and filename.endswith("Commands.py"):
             await bot.load_extension(f"cogs.{filename[:-3]}")
-            logger.log(f"Loaded cogs.{filename}", logger.LoggerModes.INFO)
+            logger.log(f"Loaded cogs.{filename}", logger.INFO)
 
 
 @bot.event
@@ -27,7 +27,7 @@ async def on_app_command_completion(interaction: discord.Interaction, command: d
     server = interaction.guild.name
     user = interaction.user
 
-    logger.log(f"[[{user}]] RAN [[{command.name}]] IN [[{server}]]", logger.LoggerModes.INFO)
+    logger.log(f"[[{user}]] RAN [[{command.name}]] IN [[{server}]]", logger.INFO)
 
 
 @bot.event
@@ -35,8 +35,7 @@ async def on_ready() -> None:
     await bot.wait_until_ready()
     await bot.tree.sync(guild=testGuild)
 
-    log_text = f"Logged in as: {bot.user}"
-    logger.log(log_text, logger.LoggerModes.INFO)
+    logger.log(f"Logged in as: {bot.user}", logger.INFO)
 
 
 async def main():
