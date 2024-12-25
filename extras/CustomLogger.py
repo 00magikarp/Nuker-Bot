@@ -1,32 +1,41 @@
-import enum
 import logging
+import os
+from logging.handlers import TimedRotatingFileHandler
 
 
 class CustomLogger:
-    class LoggerModes(enum.Enum):
-        """
-        Custom class to pass enum members into the :func:`log` function.
+    """
+    Fields to pass into the :func:`log` function.
 
-        Options for the mode are:
+    Options for the mode are:
 
-        - :attr:`LoggerModes.INFO`
-        - :attr:`LoggerModes.WARNING`
-        - :attr:`LoggerModes.DEBUG`
-        """
-        INFO = 1
-        WARNING = 2
-        DEBUG = 3
+    - :attr:`INFO`
+    - :attr:`WARNING`
+    - :attr:`DEBUG`
+    """
+    INFO = logging.INFO
+    WARNING = logging.WARNING
+    DEBUG = logging.DEBUG
 
-    def __init__(self):
+    def __init__(self, level: int):
         self.logger = logging.getLogger('discord')
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(level)
 
-        handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
-        handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(name)s: %(message)s'))
+        formatter = logging.Formatter('[%(asctime)s] %(levelname)s: %(name)s: %(message)s')
+
+        if not os.path.exists("log"):
+            os.makedirs("log")
+
+        handler = TimedRotatingFileHandler("log/discord.log", when="midnight", interval=1, backupCount=14)
+        handler.setFormatter(formatter)
+
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
 
         self.logger.addHandler(handler)
+        self.logger.addHandler(console_handler)
 
-    def log(self, text: str, logger_mode: LoggerModes) -> None:
+    def log(self, text: str, logger_mode: int) -> None:
         """
         \"Custom\" Logger
 
@@ -36,15 +45,15 @@ class CustomLogger:
         :param logger_mode: The mode of logging, from the enum object :class:`LoggerModes`
         """
 
-        if logger_mode == logger_mode.INFO:
-            self.logger.info(text)
-        elif logger_mode == logger_mode.WARNING:
-            self.logger.warning(text)
-        elif logger_mode == logger_mode.DEBUG:
-            self.logger.debug(text)
-        else:
-            self.logger.warning(f"ATTEMPT TO LOG FAILED. DEFAULTED TO WARNING.")
-            self.logger.warning(text)
+        match logger_mode:
+            case CustomLogger.INFO:
+                self.logger.info(text)
+            case CustomLogger.WARNING:
+                self.logger.warning(text)
+            case CustomLogger.DEBUG:
+                self.logger.debug(text)
+            case _:
+                self.logger.warning(f"ATTEMPT TO LOG FAILED. DEFAULTED TO WARNING.")
+                self.logger.warning(text)
 
-        print(text)
         return
