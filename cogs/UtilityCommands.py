@@ -1,22 +1,27 @@
 import os
+import sys
+
 import dotenv
 import discord
 from discord.ext import commands
 
-from extras.CheckAdmin import check_admin
+from extras.checks import check_admin, is_magicarp
 
 dotenv.load_dotenv()
 TEST_GUILD_ID = os.getenv('TEST_GUILD')
+LOCKDOWN_ROLE = os.getenv('LOCKDOWN_ROLE')
+ANNOUNCEMENT_CHANNEL = os.getenv('ANNOUNCEMENT_CHANNEL')
 testGuild = discord.Object(id=TEST_GUILD_ID)
 
 
 class UtilityCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.in_lockdown: bool = False
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.tree.sync()
+        await self.bot.tree.sync(guild=testGuild)
 
     @discord.app_commands.command(
         name="ping",
@@ -42,16 +47,64 @@ class UtilityCommands(commands.Cog):
         Purge the last `messagesToDelete` commands in the channel
 
         :param interaction: The interaction object.
-        :param number: Amount of messages to remove from the channel. Maximum is 100.
+        :param number: Amount of messages to remove from the channel. Maximum is 250.
         """
         if not await check_admin(interaction):
             return
 
-        if number > 100:
-            number = 100
+        if number > 250:
+            number = 250
 
         await interaction.response.send_message("💥", ephemeral=True)
         await interaction.channel.purge(limit=number)
+
+    @discord.app_commands.command(
+        name="kill",
+        description="Kill the bot (magicarp only)",
+    )
+    async def kill(self, interaction: discord.Interaction) -> None:
+        """
+        Kill the bot (magicarp only)
+
+        :param interaction: The interaction object.
+        """
+        if not await is_magicarp(interaction):
+            await interaction.response.send_message(f"Server has entered LOCKDOWN.")
+            return
+
+        await interaction.response.send_message(f"I've been killed by <@{interaction.user.id}>")
+        sys.exit(1)
+
+    @discord.app_commands.command(
+        name="lockdown",
+        description="Lockdown the server, no new messages or viewing channels",
+    )
+    async def lockdown(self, interaction: discord.Interaction) -> None:
+        """
+        Lockdown the server, no new messages or viewing channels
+
+        :param interaction: The interaction object.
+        """
+        if not await check_admin(interaction):
+            return
+
+        if not self.in_lockdown:
+            self.in_lockdown = True
+            await interaction.response.send_message("Server has entered LOCKDOWN.")
+            if interaction.channel_id != int(ANNOUNCEMENT_CHANNEL):
+                await interaction.guild.get_channel(int(ANNOUNCEMENT_CHANNEL)).send("Server has entered LOCKDOWN.")
+        else:
+            self.in_lockdown = False
+            await interaction.response.send_message("Server has exited LOCKDOWN.")
+            if interaction.channel_id != int(ANNOUNCEMENT_CHANNEL):
+                await interaction.guild.get_channel(int(ANNOUNCEMENT_CHANNEL)).send("Server has exited LOCKDOWN.")
+
+        lockdown_role: discord.Role = interaction.guild.get_role(int(LOCKDOWN_ROLE))
+        for user in interaction.guild.members:
+            if self.in_lockdown and not user.bot:
+                await user.add_roles(lockdown_role)
+            elif not self.in_lockdown and not user.bot:
+                await user.remove_roles(lockdown_role)
 
 
 async def setup(bot):
